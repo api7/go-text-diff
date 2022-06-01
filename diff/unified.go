@@ -2,11 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gotextdiff
+package diff
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 // Unified represents a set of edits as a unified diff.
@@ -17,6 +19,10 @@ type Unified struct {
 	To string
 	// Hunks is the set of edit hunks needed to transform the file content.
 	Hunks []*Hunk
+	// Colorful is whether to use the color lib to render.
+	Colorful bool
+	// OmitEOL is whether to omit the `No newline at end of file` warning.
+	OmitEOL bool
 }
 
 // Hunk represents a contiguous set of line edits to apply.
@@ -73,9 +79,22 @@ const (
 	gap  = edge * 2
 )
 
+type Option func(*Unified)
+
+func Colorful(cf bool) Option {
+	return func(u *Unified) {
+		u.Colorful = cf
+	}
+}
+func OmitEOL(oe bool) Option {
+	return func(u *Unified) {
+		u.OmitEOL = oe
+	}
+}
+
 // ToUnified takes a file contents and a sequence of edits, and calculates
 // a unified diff that represents those edits.
-func ToUnified(from, to string, content string, edits []TextEdit) Unified {
+func ToUnified(from, to string, content string, edits []TextEdit, options ...Option) Unified {
 	u := Unified{
 		From: from,
 		To:   to,
@@ -83,6 +102,11 @@ func ToUnified(from, to string, content string, edits []TextEdit) Unified {
 	if len(edits) == 0 {
 		return u
 	}
+	// apply options
+	for _, option := range options {
+		option(&u)
+	}
+
 	c, edits, partial := prepareEdits(content, edits)
 	if partial {
 		edits = lineEdits(content, c, edits)
@@ -96,12 +120,12 @@ func ToUnified(from, to string, content string, edits []TextEdit) Unified {
 		end := edit.Span.End().Line() - 1
 		switch {
 		case h != nil && start == last:
-			//direct extension
+			// direct extension
 		case h != nil && start <= last+gap:
-			//within range of previous lines, add the joiners
+			// within range of previous lines, add the joiners
 			addEqualLines(h, lines, last, start)
 		default:
-			//need to start a new hunk
+			// need to start a new hunk
 			if h != nil {
 				// add the edge to the previous hunk
 				addEqualLines(h, lines, last, last+edge)
@@ -160,14 +184,65 @@ func addEqualLines(h *Hunk, lines []string, start, end int) int {
 	return delta
 }
 
+func (u Unified) FormatFrom() string {
+	from := fmt.Sprintf("--- %s\n", u.From)
+	if u.Colorful {
+		from = color.RedString(from)
+	}
+	return from
+}
+
+func (u Unified) FormatTo() string {
+	to := fmt.Sprintf("+++ %s\n", u.To)
+	if u.Colorful {
+		to = color.GreenString(to)
+	}
+	return to
+}
+
+func (u Unified) FormatLineCount(fromLine, fromCount, toLine, toCount int) string {
+	lineCount := "@@"
+	if fromCount > 1 {
+		lineCount += fmt.Sprintf(" -%d,%d", fromLine, fromCount)
+	} else {
+		lineCount += fmt.Sprintf(" -%d", fromLine)
+	}
+	if toCount > 1 {
+		lineCount += fmt.Sprintf(" +%d,%d", toLine, toCount)
+	} else {
+		lineCount += fmt.Sprintf(" +%d", toLine)
+	}
+	lineCount += " @@\n"
+	if u.Colorful {
+		lineCount = color.CyanString(lineCount)
+	}
+	return lineCount
+}
+
+func (u Unified) FormatNew(content string) string {
+	content = fmt.Sprintf("+%s", content)
+	if u.Colorful {
+		content = color.GreenString(content)
+	}
+	return content
+}
+
+func (u Unified) FormatRemove(content string) string {
+	content = fmt.Sprintf("-%s", content)
+	if u.Colorful {
+		content = color.RedString(content)
+	}
+	return content
+}
+
 // Format converts a unified diff to the standard textual form for that diff.
 // The output of this function can be passed to tools like patch.
 func (u Unified) Format(f fmt.State, r rune) {
 	if len(u.Hunks) == 0 {
 		return
 	}
-	fmt.Fprintf(f, "--- %s\n", u.From)
-	fmt.Fprintf(f, "+++ %s\n", u.To)
+	fmt.Fprintf(f, "%s", u.FormatFrom())
+	fmt.Fprintf(f, "%s", u.FormatTo())
 	for _, hunk := range u.Hunks {
 		fromCount, toCount := 0, 0
 		for _, l := range hunk.Lines {
@@ -181,29 +256,22 @@ func (u Unified) Format(f fmt.State, r rune) {
 				toCount++
 			}
 		}
-		fmt.Fprint(f, "@@")
-		if fromCount > 1 {
-			fmt.Fprintf(f, " -%d,%d", hunk.FromLine, fromCount)
-		} else {
-			fmt.Fprintf(f, " -%d", hunk.FromLine)
-		}
-		if toCount > 1 {
-			fmt.Fprintf(f, " +%d,%d", hunk.ToLine, toCount)
-		} else {
-			fmt.Fprintf(f, " +%d", hunk.ToLine)
-		}
-		fmt.Fprint(f, " @@\n")
+		fmt.Fprint(f, u.FormatLineCount(hunk.FromLine, fromCount, hunk.ToLine, toCount))
 		for _, l := range hunk.Lines {
 			switch l.Kind {
 			case Delete:
-				fmt.Fprintf(f, "-%s", l.Content)
+				fmt.Fprintf(f, "%s", u.FormatRemove(l.Content))
 			case Insert:
-				fmt.Fprintf(f, "+%s", l.Content)
+				fmt.Fprintf(f, "%s", u.FormatNew(l.Content))
 			default:
 				fmt.Fprintf(f, " %s", l.Content)
 			}
 			if !strings.HasSuffix(l.Content, "\n") {
-				fmt.Fprintf(f, "\n\\ No newline at end of file\n")
+				ending := "\n\\ No newline at end of file\n"
+				if u.OmitEOL {
+					ending = "\n"
+				}
+				fmt.Fprintf(f, ending)
 			}
 		}
 	}

@@ -5,7 +5,7 @@
 // package difftest_test supplies a set of tests that will operate on any
 // implementation of a diff algorithm as exposed by
 // "github.com/api7/gotextdiff"
-package difftest_test
+package diff
 
 import (
 	"fmt"
@@ -15,13 +15,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/api7/gotextdiff/difftest"
 	"github.com/api7/gotextdiff/testenv"
 )
 
 func TestVerifyUnified(t *testing.T) {
 	testenv.NeedsTool(t, "diff")
-	for _, test := range difftest.TestCases {
+	for _, test := range TestCases {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Helper()
 			if test.NoDiff {
@@ -32,7 +31,7 @@ func TestVerifyUnified(t *testing.T) {
 				t.Fatal(err)
 			}
 			if len(diff) > 0 {
-				diff = difftest.UnifiedPrefix + diff
+				diff = UnifiedPrefix + diff
 			}
 			if diff != test.Unified {
 				t.Errorf("unified:\n%q\ndiff -u:\n%q", test.Unified, diff)

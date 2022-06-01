@@ -7,10 +7,10 @@ package myers_test
 import (
 	"testing"
 
-	"github.com/api7/gotextdiff/difftest"
+	"github.com/api7/gotextdiff/diff"
 	"github.com/api7/gotextdiff/myers"
 )
 
 func TestDiff(t *testing.T) {
-	difftest.DiffTest(t, myers.ComputeEdits)
+	diff.DiffTest(t, myers.ComputeEdits)
 }
