@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/api7/gotextdiff"
 
+	"github.com/api7/gotextdiff"
 	"github.com/api7/gotextdiff/diff"
 )
 
