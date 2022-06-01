@@ -1,0 +1,32 @@
+name: Unit Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        goversion:
+          - "1.16"
+          - "1.17"
+          - "1.18"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.goversion }}
+
+      - name: run test
+        run: |
+          go test ./...
