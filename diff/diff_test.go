@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/api7/gotextdiff/difftest"
 	"github.com/api7/gotextdiff/span"
 )
 
 func TestApplyEdits(t *testing.T) {
-	for _, tc := range difftest.TestCases {
+	for _, tc := range TestCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Helper()
 			if got := ApplyEdits(tc.In, tc.Edits); got != tc.Out {
@@ -25,7 +24,7 @@ func TestApplyEdits(t *testing.T) {
 }
 
 func TestLineEdits(t *testing.T) {
-	for _, tc := range difftest.TestCases {
+	for _, tc := range TestCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Helper()
 			// if line edits not specified, it is the same as edits
@@ -41,15 +40,15 @@ func TestLineEdits(t *testing.T) {
 }
 
 func TestUnified(t *testing.T) {
-	for _, tc := range difftest.TestCases {
+	for _, tc := range TestCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Helper()
-			unified := fmt.Sprint(ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.Edits))
+			unified := fmt.Sprint(ToUnified(FileA, FileB, tc.In, tc.Edits))
 			if unified != tc.Unified {
 				t.Errorf("edits got diff:\n%v\nexpected:\n%v", unified, tc.Unified)
 			}
 			if tc.LineEdits != nil {
-				unified := fmt.Sprint(ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.LineEdits))
+				unified := fmt.Sprint(ToUnified(FileA, FileB, tc.In, tc.LineEdits))
 				if unified != tc.Unified {
 					t.Errorf("lineEdits got diff:\n%v\nexpected:\n%v", unified, tc.Unified)
 				}

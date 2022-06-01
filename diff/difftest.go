@@ -5,13 +5,12 @@
 // package difftest supplies a set of tests that will operate on any
 // implementation of a diff algorithm as exposed by
 // "github.com/api7/gotextdiff"
-package difftest
+package diff
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/api7/gotextdiff/diff"
 	"github.com/api7/gotextdiff/span"
 )
 
@@ -23,7 +22,7 @@ const (
 
 var TestCases = []struct {
 	Name, In, Out, Unified string
-	Edits, LineEdits       []diff.TextEdit
+	Edits, LineEdits       []TextEdit
 	NoDiff                 bool
 }{{
 	Name: "empty",
@@ -42,8 +41,8 @@ var TestCases = []struct {
 -fruit
 +cheese
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(0, 5), NewText: "cheese"}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 6), NewText: "cheese\n"}},
+	Edits:     []TextEdit{{Span: newSpan(0, 5), NewText: "cheese"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 6), NewText: "cheese\n"}},
 }, {
 	Name: "insert_rune",
 	In:   "gord\n",
@@ -53,8 +52,8 @@ var TestCases = []struct {
 -gord
 +gourd
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(2, 2), NewText: "u"}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 5), NewText: "gourd\n"}},
+	Edits:     []TextEdit{{Span: newSpan(2, 2), NewText: "u"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 5), NewText: "gourd\n"}},
 }, {
 	Name: "delete_rune",
 	In:   "groat\n",
@@ -64,8 +63,8 @@ var TestCases = []struct {
 -groat
 +goat
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(1, 2), NewText: ""}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 6), NewText: "goat\n"}},
+	Edits:     []TextEdit{{Span: newSpan(1, 2), NewText: ""}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 6), NewText: "goat\n"}},
 }, {
 	Name: "replace_rune",
 	In:   "loud\n",
@@ -75,8 +74,8 @@ var TestCases = []struct {
 -loud
 +lord
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(2, 3), NewText: "r"}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 5), NewText: "lord\n"}},
+	Edits:     []TextEdit{{Span: newSpan(2, 3), NewText: "r"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 5), NewText: "lord\n"}},
 }, {
 	Name: "replace_partials",
 	In:   "blanket\n",
@@ -86,11 +85,11 @@ var TestCases = []struct {
 -blanket
 +bunker
 `[1:],
-	Edits: []diff.TextEdit{
+	Edits: []TextEdit{
 		{Span: newSpan(1, 3), NewText: "u"},
 		{Span: newSpan(6, 7), NewText: "r"},
 	},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 8), NewText: "bunker\n"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 8), NewText: "bunker\n"}},
 }, {
 	Name: "insert_line",
 	In:   "1: one\n3: three\n",
@@ -101,7 +100,7 @@ var TestCases = []struct {
 +2: two
  3: three
 `[1:],
-	Edits: []diff.TextEdit{{Span: newSpan(7, 7), NewText: "2: two\n"}},
+	Edits: []TextEdit{{Span: newSpan(7, 7), NewText: "2: two\n"}},
 }, {
 	Name: "replace_no_newline",
 	In:   "A",
@@ -113,7 +112,7 @@ var TestCases = []struct {
 +B
 \ No newline at end of file
 `[1:],
-	Edits: []diff.TextEdit{{Span: newSpan(0, 1), NewText: "B"}},
+	Edits: []TextEdit{{Span: newSpan(0, 1), NewText: "B"}},
 }, {
 	Name: "add_end",
 	In:   "A",
@@ -125,8 +124,8 @@ var TestCases = []struct {
 +AB
 \ No newline at end of file
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(1, 1), NewText: "B"}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 1), NewText: "AB"}},
+	Edits:     []TextEdit{{Span: newSpan(1, 1), NewText: "B"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 1), NewText: "AB"}},
 }, {
 	Name: "add_newline",
 	In:   "A",
@@ -137,8 +136,8 @@ var TestCases = []struct {
 \ No newline at end of file
 +A
 `[1:],
-	Edits:     []diff.TextEdit{{Span: newSpan(1, 1), NewText: "\n"}},
-	LineEdits: []diff.TextEdit{{Span: newSpan(0, 1), NewText: "A\n"}},
+	Edits:     []TextEdit{{Span: newSpan(1, 1), NewText: "\n"}},
+	LineEdits: []TextEdit{{Span: newSpan(0, 1), NewText: "A\n"}},
 }, {
 	Name: "delete_front",
 	In:   "A\nB\nC\nA\nB\nB\nA\n",
@@ -155,7 +154,7 @@ var TestCases = []struct {
  A
 +C
 `[1:],
-	Edits: []diff.TextEdit{
+	Edits: []TextEdit{
 		{Span: newSpan(0, 4), NewText: ""},
 		{Span: newSpan(6, 6), NewText: "B\n"},
 		{Span: newSpan(10, 12), NewText: ""},
@@ -174,8 +173,8 @@ var TestCases = []struct {
 +C
 +
 `[1:],
-		Edits:     []diff.TextEdit{{Span: newSpan(2, 3), NewText: "C\n"}},
-		LineEdits: []diff.TextEdit{{Span: newSpan(2, 4), NewText: "C\n\n"}},
+		Edits:     []TextEdit{{Span: newSpan(2, 3), NewText: "C\n"}},
+		LineEdits: []TextEdit{{Span: newSpan(2, 4), NewText: "C\n\n"}},
 	},
 	{
 		Name: "multiple_replace",
@@ -195,7 +194,7 @@ var TestCases = []struct {
 -G
 +K
 `[1:],
-		Edits: []diff.TextEdit{
+		Edits: []TextEdit{
 			{Span: newSpan(2, 8), NewText: "H\nI\nJ\n"},
 			{Span: newSpan(12, 14), NewText: "K\n"},
 		},
@@ -217,14 +216,14 @@ func init() {
 	}
 }
 
-func DiffTest(t *testing.T, compute diff.ComputeEdits) {
+func DiffTest(t *testing.T, compute ComputeEdits) {
 	t.Helper()
 	for _, test := range TestCases {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Helper()
 			edits := compute(span.URIFromPath("/"+test.Name), test.In, test.Out)
-			got := diff.ApplyEdits(test.In, edits)
-			unified := fmt.Sprint(diff.ToUnified(FileA, FileB, test.In, edits))
+			got := ApplyEdits(test.In, edits)
+			unified := fmt.Sprint(ToUnified(FileA, FileB, test.In, edits))
 			if got != test.Out {
 				t.Errorf("got patched:\n%v\nfrom diff:\n%v\nexpected:\n%v", got, unified, test.Out)
 			}
