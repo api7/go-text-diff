@@ -21,6 +21,8 @@ type Unified struct {
 	Hunks []*Hunk
 	// Colorful is whether to use the color lib to render.
 	Colorful bool
+	// OmitEOL is whether to omit the `No newline at end of file` warning.
+	OmitEOL bool
 }
 
 // Hunk represents a contiguous set of line edits to apply.
@@ -82,6 +84,11 @@ type Option func(*Unified)
 func Colorful(cf bool) Option {
 	return func(u *Unified) {
 		u.Colorful = cf
+	}
+}
+func OmitEOL(oe bool) Option {
+	return func(u *Unified) {
+		u.OmitEOL = oe
 	}
 }
 
@@ -194,7 +201,7 @@ func (u Unified) FormatTo() string {
 }
 
 func (u Unified) FormatLineCount(fromLine, fromCount, toLine, toCount int) string {
-	lineCount := "@@ "
+	lineCount := "@@"
 	if fromCount > 1 {
 		lineCount += fmt.Sprintf(" -%d,%d", fromLine, fromCount)
 	} else {
@@ -260,7 +267,11 @@ func (u Unified) Format(f fmt.State, r rune) {
 				fmt.Fprintf(f, " %s", l.Content)
 			}
 			if !strings.HasSuffix(l.Content, "\n") {
-				fmt.Fprintf(f, "\n")
+				ending := "\n\\ No newline at end of file\n"
+				if u.OmitEOL {
+					ending = "\n"
+				}
+				fmt.Fprintf(f, ending)
 			}
 		}
 	}

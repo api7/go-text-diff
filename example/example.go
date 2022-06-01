@@ -35,5 +35,6 @@ But after they are produced,
 
 	edits := myers.ComputeEdits(span.URIFromPath("a.txt"), aString, bString)
 
-	fmt.Print(gotextdiff.ToUnified("a.txt", "b.txt", aString, edits, gotextdiff.Colorful(true)))
+	fmt.Print(gotextdiff.ToUnified("a.txt", "b.txt", aString, edits,
+		gotextdiff.Colorful(true), gotextdiff.OmitEOL(true)))
 }
