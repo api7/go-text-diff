@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/api7/gotextdiff"
-	"github.com/api7/gotextdiff/myers"
-	"github.com/api7/gotextdiff/span"
+
+	"github.com/api7/gotextdiff/diff"
 )
 
 func main() {
@@ -33,8 +32,6 @@ The two are the same,
 But after they are produced,
   they have different22 names.`
 
-	edits := myers.ComputeEdits(span.URIFromPath("a.txt"), aString, bString)
-
-	fmt.Print(gotextdiff.ToUnified("a.txt", "b.txt", aString, edits,
-		gotextdiff.Colorful(true), gotextdiff.OmitEOL(true)))
+	fmt.Print(gotextdiff.StringDiff(aString, bString,
+		diff.Colorful(true), diff.OmitEOL(true)))
 }

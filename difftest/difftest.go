@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"testing"
 
-	diff "github.com/api7/gotextdiff"
+	"github.com/api7/gotextdiff/diff"
 	"github.com/api7/gotextdiff/span"
 )
 

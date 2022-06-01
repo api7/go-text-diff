@@ -1,10 +1,9 @@
-package gotextdiff_test
+package diff
 
 import (
 	"fmt"
 	"testing"
 
-	diff "github.com/api7/gotextdiff"
 	"github.com/api7/gotextdiff/difftest"
 	"github.com/api7/gotextdiff/span"
 )
@@ -13,11 +12,11 @@ func TestApplyEdits(t *testing.T) {
 	for _, tc := range difftest.TestCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Helper()
-			if got := diff.ApplyEdits(tc.In, tc.Edits); got != tc.Out {
+			if got := ApplyEdits(tc.In, tc.Edits); got != tc.Out {
 				t.Errorf("ApplyEdits edits got %q, want %q", got, tc.Out)
 			}
 			if tc.LineEdits != nil {
-				if got := diff.ApplyEdits(tc.In, tc.LineEdits); got != tc.Out {
+				if got := ApplyEdits(tc.In, tc.LineEdits); got != tc.Out {
 					t.Errorf("ApplyEdits lineEdits got %q, want %q", got, tc.Out)
 				}
 			}
@@ -34,7 +33,7 @@ func TestLineEdits(t *testing.T) {
 			if edits == nil {
 				edits = tc.Edits
 			}
-			if got := diff.LineEdits(tc.In, tc.Edits); diffEdits(got, edits) {
+			if got := LineEdits(tc.In, tc.Edits); diffEdits(got, edits) {
 				t.Errorf("LineEdits got %q, want %q", got, edits)
 			}
 		})
@@ -45,12 +44,12 @@ func TestUnified(t *testing.T) {
 	for _, tc := range difftest.TestCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Helper()
-			unified := fmt.Sprint(diff.ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.Edits))
+			unified := fmt.Sprint(ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.Edits))
 			if unified != tc.Unified {
 				t.Errorf("edits got diff:\n%v\nexpected:\n%v", unified, tc.Unified)
 			}
 			if tc.LineEdits != nil {
-				unified := fmt.Sprint(diff.ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.LineEdits))
+				unified := fmt.Sprint(ToUnified(difftest.FileA, difftest.FileB, tc.In, tc.LineEdits))
 				if unified != tc.Unified {
 					t.Errorf("lineEdits got diff:\n%v\nexpected:\n%v", unified, tc.Unified)
 				}
@@ -59,7 +58,7 @@ func TestUnified(t *testing.T) {
 	}
 }
 
-func diffEdits(got, want []diff.TextEdit) bool {
+func diffEdits(got, want []TextEdit) bool {
 	if len(got) != len(want) {
 		return true
 	}

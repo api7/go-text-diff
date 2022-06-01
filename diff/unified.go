@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package gotextdiff
+package diff
 
 import (
 	"fmt"
@@ -94,7 +94,7 @@ func OmitEOL(oe bool) Option {
 
 // ToUnified takes a file contents and a sequence of edits, and calculates
 // a unified diff that represents those edits.
-func ToUnified(from, to string, content string, edits []TextEdit, options ...func(*Unified)) Unified {
+func ToUnified(from, to string, content string, edits []TextEdit, options ...Option) Unified {
 	u := Unified{
 		From: from,
 		To:   to,
