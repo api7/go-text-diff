@@ -32,6 +32,6 @@ The two are the same,
 But after they are produced,
   they have different22 names.`
 
-	fmt.Print(gotextdiff.StringDiff(aString, bString,
+	fmt.Print(gotextdiff.StringsDiff(aString, bString,
 		diff.Colorful(true), diff.OmitEOL(true)))
 }
